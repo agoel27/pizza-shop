@@ -353,16 +353,27 @@ public class PizzaStore {
    /*
     * Creates a new user
     **/
-   public static void CreateUser(PizzaStore esql){
+    public static void CreateUser(PizzaStore esql){
       String loginString = "";
       String password = "";
       String phoneNum = "";
+      List<List<String>> existingLogins = new ArrayList<>();
+      boolean loginExists;
+
+      // get existing logins
+      try {
+         existingLogins = esql.executeQueryAndReturnResult("SELECT login FROM Users");
+      } catch (SQLException e) {
+         System.out.println("Error getting existing logins: " + e.getMessage());
+         return;
+      }
 
       // get and validate loginString
       do {
          System.out.print("Please enter login (1-50 characters): ");
          try {
             loginString = in.readLine().trim();
+
             if(loginString.isEmpty()) {
                System.out.println("Login cannot be empty!");
                continue;
@@ -370,6 +381,20 @@ public class PizzaStore {
                System.out.println("Login cannot be greater than 50 characters!");
                continue;
             }
+
+            // check if login already exists
+            loginExists = false;
+            for (List<String> row : existingLogins) {
+               if (row.get(0).equals(loginString)) {
+                  loginExists = true;
+                  break;
+               }
+            }
+            if (loginExists) {
+               System.out.println("This login already exists! Please try a different login.");
+               continue;
+            }
+            
             break;
          } catch (Exception e) {
             System.out.println("Your input is invalid!");
