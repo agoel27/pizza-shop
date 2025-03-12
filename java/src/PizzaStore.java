@@ -251,11 +251,11 @@ public class PizzaStore {
          boolean keepon = true;
          while(keepon) {
             // These are sample SQL statements
-            System.out.println("MAIN MENU");
+            System.out.println("\nMAIN MENU");
             System.out.println("---------");
             System.out.println("1. Create user");
             System.out.println("2. Log in");
-            System.out.println("9. < EXIT");
+            System.out.println("9. < EXIT\n");
             String authorisedUser = null;
             switch (readChoice()){
                case 1: CreateUser(esql); break;
@@ -354,7 +354,7 @@ public class PizzaStore {
     * Creates a new user
     **/
     public static void CreateUser(PizzaStore esql){
-      String loginString = "";
+      String loginInput = "";
       String password = "";
       String phoneNum = "";
       List<List<String>> existingLogins = new ArrayList<>();
@@ -368,16 +368,16 @@ public class PizzaStore {
          return;
       }
 
-      // get and validate loginString
+      // get and validate loginInput
       do {
          System.out.print("Please enter login (1-50 characters): ");
          try {
-            loginString = in.readLine().trim();
+            loginInput = in.readLine().trim();
 
-            if(loginString.isEmpty()) {
+            if(loginInput.isEmpty()) {
                System.out.println("Login cannot be empty!");
                continue;
-            } else if (loginString.length() > 50) {
+            } else if (loginInput.length() > 50) {
                System.out.println("Login cannot be greater than 50 characters!");
                continue;
             }
@@ -385,7 +385,7 @@ public class PizzaStore {
             // check if login already exists
             loginExists = false;
             for (List<String> row : existingLogins) {
-               if (row.get(0).equals(loginString)) {
+               if (row.get(0).equals(loginInput)) {
                   loginExists = true;
                   break;
                }
@@ -442,7 +442,7 @@ public class PizzaStore {
 
       // add new user to db
       try {
-         esql.executeUpdate("INSERT INTO Users (login, password, role, favoriteItems, phoneNum) VALUES ('" + loginString + "', '" + password + "', 'customer', NULL, '" + phoneNum + "');");
+         esql.executeUpdate("INSERT INTO Users (login, password, role, favoriteItems, phoneNum) VALUES ('" + loginInput + "', '" + password + "', 'customer', NULL, '" + phoneNum + "');");
          System.out.println("User created successfully!");
       } catch (SQLException e) {
             System.out.println("Error inserting user: " + e.getMessage());
@@ -453,13 +453,75 @@ public class PizzaStore {
 
    /*
     * Check log in credentials for an existing user
-    * @return User login or null is the user does not exist
+    * @return User login or null if the user does not exist
     **/
    public static String LogIn(PizzaStore esql){
-      return null;
-   }//end
+      String loginInput = "";
+      String passwordInput = "";
+      String userPassword = "";
+      List<List<String>> userInfo = new ArrayList<>();
 
-// Rest of the functions definition go in here
+      // get and validate loginInput
+      do {
+         System.out.print("Please enter login (1-50 characters): ");
+         try {
+            loginInput = in.readLine().trim();
+
+            if(loginInput.isEmpty()) {
+               System.out.println("Login cannot be empty!");
+               continue;
+            } else if (loginInput.length() > 50) {
+               System.out.println("Login cannot be greater than 50 characters!");
+               continue;
+            }
+
+            // get user login information and authenticate login
+            try {
+               userInfo = esql.executeQueryAndReturnResult("SELECT login, password FROM Users WHERE login='" + loginInput + "';");
+            } catch (SQLException e) {
+               System.out.println("Error getting user login information: " + e.getMessage());
+               return null;
+            }
+            if(userInfo.isEmpty()) {
+               System.out.println(loginInput + " does not exist!");
+               return null;
+            }
+
+            break;
+         } catch (Exception e) {
+            System.out.println("Your input is invalid!");
+            continue;
+         }
+      }while (true);
+
+      // get and validate passwordInput
+      do {
+         System.out.print("Please enter password (1-30 characters): ");
+         try {
+            passwordInput = in.readLine().trim();
+            userPassword = userInfo.get(0).get(1);
+            if(passwordInput.isEmpty()) {
+               System.out.println("Password cannot be empty!");
+               continue;
+            } else if (passwordInput.length() > 30) {
+               System.out.println("Password cannot be greater than 30 characters!");
+               continue;
+            }
+
+            if (!passwordInput.equals(userPassword)) {
+               System.out.println("Wrong password! Please try again.");
+               continue;
+            }
+
+            break;
+         } catch (Exception e) {
+            System.out.println("Your input is invalid!");
+            continue;
+         }
+      }while (true);
+
+      return loginInput;
+   }//end
 
    public static void viewProfile(PizzaStore esql) {}
    public static void updateProfile(PizzaStore esql) {}
