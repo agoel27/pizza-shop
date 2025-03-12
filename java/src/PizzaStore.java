@@ -529,7 +529,7 @@ public class PizzaStore {
     */
    public static void viewProfile(PizzaStore esql, String authorizedUser) {
       try {
-         esql.executeQueryAndPrintResult("SELECT * FROM Users WHERE login='" + authorizedUser + "'");
+         esql.executeQueryAndPrintResult("SELECT login, password, favoriteItems, phoneNum FROM Users WHERE login='" + authorizedUser + "'");
       } catch (SQLException e) {
          System.out.println("Error getting login information: " + e.getMessage());
          return;
