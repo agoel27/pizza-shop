@@ -112,13 +112,13 @@ public class PizzaStore {
       // iterates through the result set and output them to standard out.
       boolean outputHeader = true;
       while (rs.next()){
-		 if(outputHeader){
-			for(int i = 1; i <= numCol; i++){
-			System.out.print(rsmd.getColumnName(i) + "\t");
-			}
-			System.out.println();
-			outputHeader = false;
-		 }
+         if(outputHeader){
+            for(int i = 1; i <= numCol; i++){
+            System.out.print(rsmd.getColumnName(i) + "\t");
+            }
+            System.out.println();
+            outputHeader = false;
+         }
          for (int i=1; i<=numCol; ++i)
             System.out.print (rs.getString (i) + "\t");
          System.out.println ();
@@ -256,17 +256,17 @@ public class PizzaStore {
             System.out.println("1. Create user");
             System.out.println("2. Log in");
             System.out.println("9. < EXIT\n");
-            String authorisedUser = null;
+            String authorizedUser = null;
             switch (readChoice()){
                case 1: CreateUser(esql); break;
-               case 2: authorisedUser = LogIn(esql); break;
+               case 2: authorizedUser = LogIn(esql); break;
                case 9: keepon = false; break;
                default : System.out.println("Unrecognized choice!"); break;
             }//end switch
-            if (authorisedUser != null) {
+            if (authorizedUser != null) {
               boolean usermenu = true;
               while(usermenu) {
-                System.out.println("MAIN MENU");
+                System.out.println("\nMAIN MENU");
                 System.out.println("---------");
                 System.out.println("1. View Profile");
                 System.out.println("2. Update Profile");
@@ -285,9 +285,9 @@ public class PizzaStore {
                 System.out.println("11. Update User");
 
                 System.out.println(".........................");
-                System.out.println("20. Log out");
+                System.out.println("20. Log out\n");
                 switch (readChoice()){
-                   case 1: viewProfile(esql); break;
+                   case 1: viewProfile(esql, authorizedUser); break;
                    case 2: updateProfile(esql); break;
                    case 3: viewMenu(esql); break;
                    case 4: placeOrder(esql); break;
@@ -459,7 +459,7 @@ public class PizzaStore {
       String loginInput = "";
       String passwordInput = "";
       String userPassword = "";
-      List<List<String>> userInfo = new ArrayList<>();
+      List<List<String>> loginInfo = new ArrayList<>();
 
       // get and validate loginInput
       do {
@@ -477,12 +477,12 @@ public class PizzaStore {
 
             // get user login information and authenticate login
             try {
-               userInfo = esql.executeQueryAndReturnResult("SELECT login, password FROM Users WHERE login='" + loginInput + "';");
+               loginInfo = esql.executeQueryAndReturnResult("SELECT login, password FROM Users WHERE login='" + loginInput + "';");
             } catch (SQLException e) {
                System.out.println("Error getting user login information: " + e.getMessage());
                return null;
             }
-            if(userInfo.isEmpty()) {
+            if(loginInfo.isEmpty()) {
                System.out.println(loginInput + " does not exist!");
                return null;
             }
@@ -499,7 +499,7 @@ public class PizzaStore {
          System.out.print("Please enter password (1-30 characters): ");
          try {
             passwordInput = in.readLine().trim();
-            userPassword = userInfo.get(0).get(1);
+            userPassword = loginInfo.get(0).get(1);
             if(passwordInput.isEmpty()) {
                System.out.println("Password cannot be empty!");
                continue;
@@ -521,9 +521,22 @@ public class PizzaStore {
       }while (true);
 
       return loginInput;
-   }//end
+   }//end LogIn
 
-   public static void viewProfile(PizzaStore esql) {}
+   
+   /*
+    * View profile of authorized user
+    */
+   public static void viewProfile(PizzaStore esql, String authorizedUser) {
+      try {
+         esql.executeQueryAndPrintResult("SELECT * FROM Users WHERE login='" + authorizedUser + "'");
+      } catch (SQLException e) {
+         System.out.println("Error getting login information: " + e.getMessage());
+         return;
+      }
+      
+   }//end viewProfile
+
    public static void updateProfile(PizzaStore esql) {}
    public static void viewMenu(PizzaStore esql) {}
    public static void placeOrder(PizzaStore esql) {}
