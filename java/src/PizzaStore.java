@@ -415,6 +415,14 @@ public class PizzaStore {
          }
       }while (true);
 
+      // add new user to db
+      try {
+         esql.executeUpdate("INSERT INTO Users (login, password, role, favoriteItems, phoneNum) VALUES ('" + loginString + "', '" + password + "', 'customer', NULL, '" + phoneNum + "');");
+         System.out.println("User created successfully!");
+      } catch (SQLException e) {
+            System.out.println("Error inserting user: " + e.getMessage());
+      }
+     
    }//end CreateUser
 
 
