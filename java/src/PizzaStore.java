@@ -696,14 +696,6 @@ public class PizzaStore {
       List<List<String>> itemNames = new ArrayList<>();
       String response = "";
 
-      // display all stores
-      try {
-         esql.executeQueryAndPrintResult("SELECT * FROM Store");
-      } catch (SQLException e) {
-         System.out.println("Error fetching store information: " + e.getMessage());
-         return;
-      }
-
       // get store ID from user and check if store exists
       do {
          storeIDInput = getIntInput("\nPlease enter the store ID that you want to order from: ");
@@ -752,7 +744,15 @@ public class PizzaStore {
    public static void viewAllOrders(PizzaStore esql) {}
    public static void viewRecentOrders(PizzaStore esql) {}
    public static void viewOrderInfo(PizzaStore esql) {}
-   public static void viewStores(PizzaStore esql) {}
+   public static void viewStores(PizzaStore esql) {
+      // display all stores
+      try {
+         esql.executeQueryAndPrintResult("SELECT * FROM Store");
+      } catch (SQLException e) {
+         System.out.println("Error fetching store information: " + e.getMessage());
+         return;
+      }
+   }
    public static void updateOrderStatus(PizzaStore esql) {}
    public static void updateMenu(PizzaStore esql) {}
    public static void updateUser(PizzaStore esql) {}
