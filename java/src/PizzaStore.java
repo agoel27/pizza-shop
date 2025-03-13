@@ -22,7 +22,9 @@ import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Map;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.lang.Math;
 
 /**
@@ -322,7 +324,7 @@ public class PizzaStore {
                    case 1: viewProfile(esql, authorizedUser); break;
                    case 2: updateProfile(esql, authorizedUser); break;
                    case 3: viewMenu(esql); break;
-                   case 4: placeOrder(esql); break;
+                   case 4: placeOrder(esql, authorizedUser); break;
                    case 5: viewAllOrders(esql); break;
                    case 6: viewRecentOrders(esql); break;
                    case 7: viewOrderInfo(esql); break;
@@ -741,6 +743,10 @@ public class PizzaStore {
          System.out.print(prompt);
          try {
             input = Integer.parseInt(in.readLine());
+            if (input <= 0) {
+               System.out.println("Your input is invalid!");
+               continue;
+            }
             break;
          }catch (Exception e) {
             System.out.println("Your input is invalid!");
@@ -750,12 +756,13 @@ public class PizzaStore {
       return input;
    }//end getIntInput
 
-   public static void placeOrder(PizzaStore esql) {
+   public static void placeOrder(PizzaStore esql, String authorizedUser) {
       int storeIDInput;
       String itemInput = "";
       int quantityInput;
       List<List<String>> itemNames = new ArrayList<>();
       String response = "";
+      Map<String, Integer> orderMap = new HashMap<>();
 
       // get store ID from user and check if store exists
       do {
@@ -779,8 +786,8 @@ public class PizzaStore {
          System.out.println("Error fetching menu item names: " + e.getMessage());
       }
 
+      //  get user's order
       do {
-
          do {
             itemInput = getStringInput("\nPlease enter the name of the item you want to order : ");
             boolean itemExists = false;
@@ -796,12 +803,58 @@ public class PizzaStore {
          } while (true);
 
          quantityInput = getIntInput("Please enter the quantity of " + itemInput + " you want to order: ");
-      
-         response = getYNInput("Would you like to order more");
+         orderMap.put(itemInput, orderMap.getOrDefault(itemInput, 0) + quantityInput);
+         response = getYNInput("Would you like to order more items");
 
       } while (response.equals("y"));
 
-   }
+      // calculate total order price
+      long totalPriceInCents = 0;
+      System.out.println("\nYou ordered:");
+      for (Map.Entry<String, Integer> entry : orderMap.entrySet()) {
+         String itemName = entry.getKey();
+         int quantity = entry.getValue();
+         try {
+            String itemPrice = esql.executeQueryAndReturnResult("SELECT price FROM Items WHERE itemName='" + itemName + "'").get(0).get(0);
+            System.out.println("Item: " + itemName + ", Quantity: " + quantity + ", Price: " + itemPrice);
+            totalPriceInCents += Math.round(Double.parseDouble(itemPrice) * 100) * quantity;
+         } catch (SQLException e) {
+            System.out.println("Error fetching " + itemName + "'s price: " + e.getMessage());
+            return;
+         }
+      }
+      System.out.println("The total price is: $" + (totalPriceInCents / 100) + "." + (totalPriceInCents % 100));
+
+      // add order to FoodOrder table
+      int orderID;
+      try {
+         orderID = Integer.parseInt(esql.executeQueryAndReturnResult("SELECT orderID FROM FoodOrder ORDER BY orderID DESC LIMIT 1").get(0).get(0)) + 1;
+      } catch (Exception e) {
+         System.out.println("Error getting previous orderID from FoodOrder table: " + e.getMessage());
+         return;
+      }
+      try {
+         esql.executeUpdate("INSERT INTO FoodOrder (orderID, login, storeID, totalPrice, orderTimestamp, orderStatus) VALUES ('" + orderID + "', '" + authorizedUser + "', '" + storeIDInput + "', '" + totalPriceInCents/100.0 + "', 'NOW()', 'incomplete');");
+      } catch (Exception e) {
+         System.out.println("Error pushing order to FoodOrder table: " + e.getMessage());
+         return;
+      }
+
+      // add order to ItemsInOrder table
+      for (Map.Entry<String, Integer> entry : orderMap.entrySet()) {
+         String itemName = entry.getKey();
+         int quantity = entry.getValue();
+         try {
+            esql.executeUpdate("INSERT INTO ItemsInOrder (orderID, itemName, quantity) VALUES ('" + orderID + "', '" + itemName + "', '" + quantity + "');");
+         } catch (SQLException e) {
+            System.out.println("Error pushing " + itemName + " into ItemsInOrder table: " + e.getMessage());
+            return;
+         }
+      }
+     
+
+   }//end placeOrder
+   
    public static void viewAllOrders(PizzaStore esql) {}
    public static void viewRecentOrders(PizzaStore esql) {}
    public static void viewOrderInfo(PizzaStore esql) {}
