@@ -362,10 +362,10 @@ public class PizzaStore {
          "*******************************************************\n");
    }//end Greeting
 
-   public static String getInput(String item) {
+   public static String getStringInput(String prompt) {
       String input = "";
       do {
-         System.out.print("Please enter " + item + ": ");
+         System.out.print(prompt);
          try {
             input = in.readLine().trim();
             break;
@@ -380,7 +380,7 @@ public class PizzaStore {
    /*
     * Gets input from user
     */
-   public static String getInput(String item, int maxLength) {
+   public static String getStringInput(String item, int maxLength) {
       String input = "";
       do {
          System.out.print("Please enter " + item + " (1-" + maxLength + " characters): ");
@@ -475,7 +475,7 @@ public class PizzaStore {
       }while (true);
 
       // get and validate password
-      passwordInput = getInput("password", 30);
+      passwordInput = getStringInput("password", 30);
 
       // get and validate phoneNum
       do {
@@ -600,10 +600,10 @@ public class PizzaStore {
     * Prompts user if they want to update 'profileItem' in profile
     * @param the thing to update in profile (string)
     */
-    public static String updateProfilePrompt(String profileItem) {
+    public static String getYNInput(String prompt) {
       String response = "";
       do {
-         System.out.print("Would you like to change your " + profileItem + " (y/n)? ");
+         System.out.print(prompt + " (y/n)? ");
          try {
             response = in.readLine();
             if(!response.equals("y") && !response.equals("n")) {
@@ -628,9 +628,9 @@ public class PizzaStore {
       String phoneNumInput = "";
       String favoriteItemsInput = "";
 
-      response = updateProfilePrompt("password");
+      response = getYNInput("Would you like to update your password");
       if (response.equals("y")) {
-         passwordInput = getInput("password", 30);
+         passwordInput = getStringInput("password", 30);
          try {
             esql.executeUpdate("UPDATE Users SET password='" + passwordInput + "' WHERE login ='" + authorizedUser + "';");
          } catch (SQLException e) {
@@ -639,9 +639,9 @@ public class PizzaStore {
          System.out.println("Successfully updated password!");
       }
 
-      response = updateProfilePrompt("phone number");
+      response = getYNInput("Would you like to update your phone number");
       if (response.equals("y")) {
-         phoneNumInput = getInput("phone number", 20);
+         phoneNumInput = getStringInput("phone number", 20);
          try {
             esql.executeUpdate("UPDATE Users SET phoneNum='" + phoneNumInput + "' WHERE login ='" + authorizedUser + "';");
          } catch (SQLException e) {
@@ -650,9 +650,9 @@ public class PizzaStore {
          System.out.println("Successfully updated phone number!");
       }
 
-      response = updateProfilePrompt("favorite items");
+      response = getYNInput("Would you like to update your favorite items");
       if (response.equals("y")) {
-         favoriteItemsInput = getInput("favorite items");
+         favoriteItemsInput = getStringInput("Please enter your favorite items: ");
          try {
             esql.executeUpdate("UPDATE Users SET favoriteItems='" + favoriteItemsInput + "' WHERE login ='" + authorizedUser + "';");
          } catch (SQLException e) {
@@ -663,14 +663,92 @@ public class PizzaStore {
 
    }// end updateProfile
 
+   /*
+    * Show menu
+    */
    public static void viewMenu(PizzaStore esql) {
       try {
          esql.executeQueryAndPrintResult("SELECT * FROM Items");
       } catch (SQLException e) {
          System.out.println("Error fetching menu items: " + e.getMessage());
       }
+   }//end viewMenu
+
+   public static int getIntInput(String prompt) {
+      int input;
+      do {
+         System.out.print(prompt);
+         try {
+            input = Integer.parseInt(in.readLine());
+            break;
+         }catch (Exception e) {
+            System.out.println("Your input is invalid!");
+            continue;
+         }
+      }while (true);
+      return input;
+   }//end getIntInput
+
+   public static void placeOrder(PizzaStore esql) {
+      int storeIDInput;
+      String itemInput = "";
+      int quantityInput;
+      List<List<String>> itemNames = new ArrayList<>();
+      String response = "";
+
+      // display all stores
+      try {
+         esql.executeQueryAndPrintResult("SELECT * FROM Store");
+      } catch (SQLException e) {
+         System.out.println("Error fetching store information: " + e.getMessage());
+         return;
+      }
+
+      // get store ID from user and check if store exists
+      do {
+         storeIDInput = getIntInput("\nPlease enter the store ID that you want to order from: ");
+         try {
+            if (esql.executeQuery("SELECT * FROM Store WHERE storeID=" + storeIDInput + ";") == 0) {
+               System.out.println("StoreID " + storeIDInput + " does not exist!");
+               continue;
+            }
+            break;
+         } catch (SQLException e) {
+            System.out.println("Error fetching store IDs: " + e.getMessage());
+            return;
+         }
+      } while(true);
+
+      // get all item names
+      try {
+         itemNames = esql.executeQueryAndReturnResult("SELECT itemName FROM Items;");
+      } catch (SQLException e) {
+         System.out.println("Error fetching menu item names: " + e.getMessage());
+      }
+
+      do {
+
+         do {
+            itemInput = getStringInput("\nPlease enter the name of the item you want to order : ");
+            boolean itemExists = false;
+            for (List<String> row : itemNames) {
+               if (row.get(0).equals(itemInput)) {
+                  itemExists = true;
+                  break;
+               }
+            }
+            if (itemExists)
+               break;
+            System.out.println("Item " + itemInput + " does not exist!");
+         } while (true);
+
+         quantityInput = getIntInput("Please enter the quantity of " + itemInput + " you want to order: ");
+      
+         response = getYNInput("Would you like to order more");
+
+      } while (response.equals("y"));
+
    }
-   public static void placeOrder(PizzaStore esql) {}
    public static void viewAllOrders(PizzaStore esql) {}
    public static void viewRecentOrders(PizzaStore esql) {}
    public static void viewOrderInfo(PizzaStore esql) {}
