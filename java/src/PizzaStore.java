@@ -754,7 +754,7 @@ public class PizzaStore {
          String itemName = entry.getKey();
          int quantity = entry.getValue();
          try {
-            String itemPrice = esql.executeQueryAndReturnResult("SELECT price FROM Items WHERE itemName='" + itemName + "'").get(0).get(0);;
+            String itemPrice = esql.executeQueryAndReturnResult("SELECT price FROM Items WHERE itemName='" + itemName + "'").get(0).get(0);
             System.out.println("Item: " + itemName + ", Quantity: " + quantity + ", Price: " + itemPrice);
             totalPriceInCents += Math.round(Double.parseDouble(itemPrice) * 100) * quantity;
          } catch (SQLException e) {
@@ -764,11 +764,31 @@ public class PizzaStore {
       }
       System.out.println("The total price is: $" + (totalPriceInCents / 100) + "." + (totalPriceInCents % 100));
 
-      // add order to FoodOrder database
+      // add order to FoodOrder table
+      int orderID;
       try {
-         esql.executeUpdate("INSERT INTO FoodOrder (orderID, login, storeID, totalPrice, orderTimestamp, orderStatus) VALUES ('" + storeIDInput + "', '" + authorizedUser + "', '" + storeIDInput + "', '" + String.format("$%d.%02d", totalPriceInCents / 100, totalPriceInCents % 100) + "', '" + orderTimestamp + "', 'incomplete');");
+         orderID = Integer.parseInt(esql.executeQueryAndReturnResult("SELECT orderID FROM FoodOrder ORDER BY orderID DESC LIMIT 1").get(0).get(0)) + 1;
       } catch (Exception e) {
-         System.out.println("Error pushing order to FoodOrder Database: " + e.getMessage());
+         System.out.println("Error getting previous orderID from FoodOrder table: " + e.getMessage());
+         return;
+      }
+      try {
+         esql.executeUpdate("INSERT INTO FoodOrder (orderID, login, storeID, totalPrice, orderTimestamp, orderStatus) VALUES ('" + orderID + "', '" + authorizedUser + "', '" + storeIDInput + "', '" + totalPriceInCents/100.0 + "', 'NOW()', 'incomplete');");
+      } catch (Exception e) {
+         System.out.println("Error pushing order to FoodOrder table: " + e.getMessage());
+         return;
+      }
+
+      // add order to ItemsInOrder table
+      for (Map.Entry<String, Integer> entry : orderMap.entrySet()) {
+         String itemName = entry.getKey();
+         int quantity = entry.getValue();
+         try {
+            esql.executeUpdate("INSERT INTO ItemsInOrder (orderID, itemName, quantity) VALUES ('" + orderID + "', '" + itemName + "', '" + quantity + "');");
+         } catch (SQLException e) {
+            System.out.println("Error pushing " + itemName + " into ItemsInOrder table: " + e.getMessage());
+            return;
+         }
       }
      
 
