@@ -94,39 +94,71 @@ public class PizzaStore {
     * @return the number of rows returned
     * @throws java.sql.SQLException when failed to execute the query
     */
-   public int executeQueryAndPrintResult (String query) throws SQLException {
-      // creates a statement object
-      Statement stmt = this._connection.createStatement ();
-
-      // issues the query instruction
-      ResultSet rs = stmt.executeQuery (query);
-
-      /*
-       ** obtains the metadata object for the returned result set.  The metadata
-       ** contains row and column info.
-       */
-      ResultSetMetaData rsmd = rs.getMetaData ();
-      int numCol = rsmd.getColumnCount ();
+    public int executeQueryAndPrintResult(String query) throws SQLException {
+      // Creates a statement object
+      Statement stmt = this._connection.createStatement();
+  
+      // Issues the query instruction
+      ResultSet rs = stmt.executeQuery(query);
+  
+      // Obtains the metadata object for the returned result set. The metadata
+      // contains row and column info.
+      ResultSetMetaData rsmd = rs.getMetaData();
+      int numCol = rsmd.getColumnCount();
       int rowCount = 0;
+  
+      // Create an array to store the maximum width of each column
+      int[] columnWidths = new int[numCol];
 
-      // iterates through the result set and output them to standard out.
+      // Set the width of each column to at least the length of the column name
+      for (int i = 1; i <= numCol; i++)
+         columnWidths[i - 1] = rsmd.getColumnName(i).length();
+  
+      // Determine the maximum width of each column
+      while (rs.next()) {
+          for (int i = 1; i <= numCol; i++) {
+              String columnValue = rs.getString(i);
+              if (columnValue != null) {
+                  columnWidths[i - 1] = Math.max(columnWidths[i - 1], columnValue.length());
+              } else {
+                  columnWidths[i - 1] = Math.max(columnWidths[i - 1], 4); // Handle null values with a width of 4
+              }
+          }
+      }
+  
+      // Reset the result set to the beginning (before we start printing)
+      rs.beforeFirst();
+  
+      // Output the header row
       boolean outputHeader = true;
-      while (rs.next()){
-         if(outputHeader){
-            for(int i = 1; i <= numCol; i++){
-            System.out.print(rsmd.getColumnName(i) + "\t");
-            }
-            System.out.println();
-            outputHeader = false;
-         }
-         for (int i=1; i<=numCol; ++i)
-            System.out.print (rs.getString (i) + "\t");
-         System.out.println ();
-         ++rowCount;
-      }//end while
+      while (rs.next()) {
+          if (outputHeader) {
+               for (int i = 1; i <= numCol; i++) {
+                  // Print the column name with the calculated width
+                  System.out.print(String.format("%-" + columnWidths[i - 1] + "s | ", rsmd.getColumnName(i)));
+               }
+               int totalWidth = 0;
+               for (int width : columnWidths) {
+                  totalWidth += (width + 2);
+               }
+               System.out.println();
+               outputHeader = false;
+          }
+          
+          // Output the data rows with column values aligned
+          for (int i = 1; i <= numCol; i++) {
+              // Print the column value with the calculated width
+              System.out.print(String.format("%-" + columnWidths[i - 1] + "s | ", rs.getString(i)));
+          }
+          System.out.println();
+          rowCount++;
+      }
+      
+      // Close the statement
       stmt.close();
       return rowCount;
-   }//end executeQuery
+   }
+  
 
    /**
     * Method to execute an input query SQL instruction (i.e. SELECT).  This
@@ -631,7 +663,13 @@ public class PizzaStore {
 
    }// end updateProfile
 
-   public static void viewMenu(PizzaStore esql) {}
+   public static void viewMenu(PizzaStore esql) {
+      try {
+         esql.executeQueryAndPrintResult("SELECT * FROM Items");
+      } catch (SQLException e) {
+         System.out.println("Error fetching menu items: " + e.getMessage());
+      }
+   }
    public static void placeOrder(PizzaStore esql) {}
    public static void viewAllOrders(PizzaStore esql) {}
    public static void viewRecentOrders(PizzaStore esql) {}
