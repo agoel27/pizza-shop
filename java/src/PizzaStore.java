@@ -256,116 +256,117 @@
     }//end cleanup
  
     /**
-     * The main execution method
-     *
-     * @param args the command line arguments this inclues the <mysql|pgsql> <login file>
-     */
-    public static void main (String[] args) {
-       if (args.length != 3) {
-          System.err.println (
-             "Usage: " +
-             "java [-classpath <classpath>] " +
-             PizzaStore.class.getName () +
-             " <dbname> <port> <user>");
-          return;
-       }//end if
- 
-       Greeting();
-       PizzaStore esql = null;
-       try{
-          // use postgres JDBC driver.
-          Class.forName ("org.postgresql.Driver").newInstance ();
-          // instantiate the PizzaStore object and creates a physical
-          // connection.
-          String dbname = args[0];
-          String dbport = args[1];
-          String user = args[2];
-          esql = new PizzaStore (dbname, dbport, user, "");
- 
-          boolean keepon = true;
-          while(keepon) {
-             // These are sample SQL statements
-             System.out.println("\nMAIN MENU");
-             System.out.println("---------");
-             System.out.println("1. Create user");
-             System.out.println("2. Log in");
-             System.out.println("9. < EXIT\n");
-             String authorizedUser = null;
-             String role = null;
-             switch (readChoice()){
-                case 1: CreateUser(esql); break;
-                case 2: 
-                   authorizedUser = LogIn(esql);
-                   role = getRole(esql, authorizedUser);
-                   if (!role.equals("customer")) {
-                      System.out.println("Logged in as a " + role);
-                   } 
-                   break;
-                case 9: keepon = false; break;
-                default : System.out.println("Unrecognized choice!"); break;
-             }//end switch
-             if (authorizedUser != null) {
+    * The main execution method
+    *
+    * @param args the command line arguments this inclues the <mysql|pgsql> <login file>
+    */
+   public static void main (String[] args) {
+      if (args.length != 3) {
+         System.err.println (
+            "Usage: " +
+            "java [-classpath <classpath>] " +
+            PizzaStore.class.getName () +
+            " <dbname> <port> <user>");
+         return;
+      }//end if
+
+      Greeting();
+      PizzaStore esql = null;
+      try{
+         // use postgres JDBC driver.
+         Class.forName ("org.postgresql.Driver").newInstance ();
+         // instantiate the PizzaStore object and creates a physical
+         // connection.
+         String dbname = args[0];
+         String dbport = args[1];
+         String user = args[2];
+         esql = new PizzaStore (dbname, dbport, user, "");
+
+         boolean keepon = true;
+         while(keepon) {
+            // These are sample SQL statements
+            System.out.println("\nMAIN MENU");
+            System.out.println("---------");
+            System.out.println("1. Create user");
+            System.out.println("2. Log in");
+            System.out.println("9. < EXIT\n");
+            String authorizedUser = null;
+            String role = null;
+            switch (readChoice()){
+               case 1: CreateUser(esql); break;
+               case 2: 
+                  authorizedUser = LogIn(esql);
+                  break;
+               case 9: keepon = false; break;
+               default : System.out.println("Unrecognized choice!"); break;
+            }//end switch
+            if (authorizedUser != null) {
+               role = getRole(esql, authorizedUser);
+               if (!role.trim().equals("customer")) {
+                  System.out.println("Logged in as a " + role);
+               } 
                boolean usermenu = true;
                while(usermenu) {
-                 System.out.println("\nMAIN MENU");
-                 System.out.println("---------");
-                 System.out.println("1. View Profile");
-                 System.out.println("2. Update Profile");
-                 System.out.println("3. View Menu");
-                 System.out.println("4. Place Order"); //make sure user specifies which store
-                 System.out.println("5. View Full Order ID History");
-                 System.out.println("6. View Past 5 Order IDs");
-                 System.out.println("7. View Order Information"); //user should specify orderID and then be able to see detailed information about the order
-                 System.out.println("8. View Stores"); 
- 
-                 //**the following functionalities should only be able to be used by drivers & managers**
-                 if (role == "driver" || role == "manager") System.out.println("9. Update Order Status");
- 
-                 //**the following functionalities should ony be able to be used by managers**
-                 if (role == "manager") {
-                   System.out.println("10. Update Menu");
-                   System.out.println("11. Update User");
-                 }
- 
-                 System.out.println(".........................");
-                 System.out.println("20. Log out\n");
-                 switch (readChoice()){
-                    case 1: viewProfile(esql, authorizedUser); break;
-                    case 2: updateProfile(esql, authorizedUser); break;
-                    case 3: viewMenu(esql); break;
-                    case 4: placeOrder(esql, authorizedUser); break;
-                    case 5: viewAllOrders(esql, authorizedUser, role); break;
-                    case 6: viewRecentOrders(esql, authorizedUser, role); break;
-                    case 7: viewOrderInfo(esql, authorizedUser, role); break;
-                    case 8: viewStores(esql); break;
-                    case 9: if (role.equals("customer")) System.out.println("Unrecognized choice!");
-                      else updateOrderStatus(esql); break;
-                    case 10: if (role.equals("customer") || role.equals("driver")) System.out.println("Unrecognized choice!");
-                      else updateMenu(esql); break;
-                    case 11: if (role.equals("customer") || role.equals("driver")) System.out.println("Unrecognized choice!");
-                      else updateUser(esql); break;
- 
-                    case 20: usermenu = false; break;
-                    default : System.out.println("Unrecognized choice!"); break;
-                 }
-               }
-             }
-          }//end while
-       }catch(Exception e) {
-          System.err.println (e.getMessage ());
-       }finally{
-          // make sure to cleanup the created table and close the connection.
-          try{
-             if(esql != null) {
-                System.out.print("Disconnecting from database...");
-                esql.cleanup ();
-                System.out.println("Done\n\nBye !");
-             }//end if
-          }catch (Exception e) {
-             // ignored.
-          }//end try
-       }//end try
-    }//end main
+                System.out.println("\nMAIN MENU");
+                System.out.println("---------");
+                System.out.println("1. View Profile");
+                System.out.println("2. Update Profile");
+                System.out.println("3. View Menu");
+                System.out.println("4. Place Order"); //make sure user specifies which store
+                System.out.println("5. View Full Order ID History");
+                System.out.println("6. View Past 5 Order IDs");
+                System.out.println("7. View Order Information"); //user should specify orderID and then be able to see detailed information about the order
+                System.out.println("8. View Stores"); 
+                
+                //**the following functionalities should only be able to be used by drivers & managers**
+                if (role.trim().equals("driver") || role.trim().equals("manager")) System.out.println("9. Update Order Status");
+
+                //**the following functionalities should ony be able to be used by managers**
+                if (role.trim().equals("manager")) {
+                  System.out.println("10. Update Menu");
+                  System.out.println("11. Update User");
+                }
+
+                System.out.println(".........................");
+                System.out.println("20. Log out\n");
+                switch (readChoice()){
+                   case 1: viewProfile(esql, authorizedUser); break;
+                   case 2: updateProfile(esql, authorizedUser); break;
+                   case 3: viewMenu(esql); break;
+                   case 4: placeOrder(esql, authorizedUser); break;
+                   case 5: viewAllOrders(esql, authorizedUser, role); break;
+                   case 6: viewRecentOrders(esql, authorizedUser, role); break;
+                   case 7: viewOrderInfo(esql, authorizedUser, role); break;
+                   case 8: viewStores(esql); break;
+                   case 9: if (role.trim().equals("customer")) System.out.println("Unrecognized choice!");
+                     else updateOrderStatus(esql); break;
+                   case 10: if (role.trim().equals("customer") || role.trim().equals("driver")) System.out.println("Unrecognized choice!");
+                     else updateMenu(esql); break;
+                   case 11: if (role.trim().equals("customer") || role.trim().equals("driver")) System.out.println("Unrecognized choice!");
+                     else updateUser(esql); break;
+
+                   case 20: usermenu = false; break;
+                   default : System.out.println("Unrecognized choice!"); break;
+                }
+              }
+            }
+         }//end while
+      }catch(Exception e) {
+         System.err.println (e.getMessage ());
+      }finally{
+         // make sure to cleanup the created table and close the connection.
+         try{
+            if(esql != null) {
+               System.out.print("Disconnecting from database...");
+               esql.cleanup ();
+               System.out.println("Done\n\nBye !");
+            }//end if
+         }catch (Exception e) {
+            // ignored.
+         }//end try
+      }//end try
+   }//end main
+
  
     private static String getRole(PizzaStore psql, String authorizedUser) {
        try {
@@ -480,7 +481,7 @@
              // check if login already exists
              loginExists = false;
              for (List<String> row : existingLogins) {
-                if (row.get(0).equals(loginInput)) {
+                if (row.get(0).trim().equals(loginInput)) {
                    loginExists = true;
                    break;
                 }
@@ -588,7 +589,7 @@
                 continue;
              }
  
-             if (!passwordInput.equals(userPassword)) {
+             if (!passwordInput.trim().equals(userPassword)) {
                 System.out.println("Wrong password! Please try again.");
                 continue;
              }
@@ -629,7 +630,7 @@
           System.out.print(prompt + " (y/n)? ");
           try {
              response = in.readLine();
-             if(!response.equals("y") && !response.equals("n")) {
+             if(!response.trim().equals("y") && !response.trim().equals("n")) {
                 System.out.println("Please enter 'y' or 'n'.");
                 continue;
              }
@@ -652,7 +653,7 @@
        String favoriteItemsInput = "";
  
        response = getYNInput("Would you like to update your password");
-       if (response.equals("y")) {
+       if (response.trim().equals("y")) {
           passwordInput = getStringInput("password", 30);
           try {
              esql.executeUpdate("UPDATE Users SET password='" + passwordInput + "' WHERE login ='" + authorizedUser + "';");
@@ -663,7 +664,7 @@
        }
  
        response = getYNInput("Would you like to update your phone number");
-       if (response.equals("y")) {
+       if (response.trim().equals("y")) {
           phoneNumInput = getStringInput("phone number", 20);
           try {
              esql.executeUpdate("UPDATE Users SET phoneNum='" + phoneNumInput + "' WHERE login ='" + authorizedUser + "';");
@@ -674,7 +675,7 @@
        }
  
        response = getYNInput("Would you like to update your favorite items");
-       if (response.equals("y")) {
+       if (response.trim().equals("y")) {
           favoriteItemsInput = getStringInput("Please enter your favorite items: ");
           try {
              esql.executeUpdate("UPDATE Users SET favoriteItems='" + favoriteItemsInput + "' WHERE login ='" + authorizedUser + "';");
@@ -812,7 +813,7 @@
              itemInput = getStringInput("\nPlease enter the name of the item you want to order : ");
              boolean itemExists = false;
              for (List<String> row : itemNames) {
-                if (row.get(0).equals(itemInput)) {
+                if (row.get(0).trim().equals(itemInput)) {
                    itemExists = true;
                    break;
                 }
@@ -826,7 +827,7 @@
           orderMap.put(itemInput, orderMap.getOrDefault(itemInput, 0) + quantityInput);
           response = getYNInput("Would you like to order more items");
  
-       } while (response.equals("y"));
+       } while (response.trim().equals("y"));
  
        // calculate total order price
        long totalPriceInCents = 0;
@@ -874,13 +875,85 @@
     }//end placeOrder
  
     public static void viewAllOrders(PizzaStore esql, String authorizedUser, String role) {
-       boolean isManager = role.equals("manager");
-       String restriction = isManager ? "" : " WHERE login='" + authorizedUser + "';";
- 
-       // TODO: viewAllOrders 
-    }
-    public static void viewRecentOrders(PizzaStore esql, String authorizedUser, String role) {}
-    public static void viewOrderInfo(PizzaStore esql, String authorizedUser, String role) {}
+      boolean canSeeAllOrders = role.trim().equals("manager") || role.trim().equals("driver");
+      String restriction = canSeeAllOrders ? "" : " WHERE login='" + authorizedUser + "'";
+
+      try {
+         esql.executeQueryAndPrintResult("SELECT orderId FROM FoodOrder" + restriction + ";");
+      } catch (SQLException e) {
+         System.out.println("Error fetching order information: " + e.getMessage());
+         return;
+      }
+   }
+
+   public static void viewRecentOrders(PizzaStore esql, String authorizedUser, String role) {
+      boolean canSeeAllOrders = role.trim().equals("manager") || role.trim().equals("driver");
+      String restriction = canSeeAllOrders ? "" : " WHERE login='" + authorizedUser + "'";
+
+      try {
+         esql.executeQueryAndPrintResult("SELECT orderId FROM FoodOrder" + restriction + " ORDER BY orderTimestamp DESC LIMIT 5;");
+      } catch (SQLException e) {
+         System.out.println("Error fetching order information: " + e.getMessage());
+         return;
+      }
+   }
+
+   public static void viewOrderInfo(PizzaStore esql, String authorizedUser, String role) {
+      boolean canSeeAllOrders = role.trim().equals("manager") || role.trim().equals("driver");
+      List<List<String>> orderIDs = new ArrayList<>();
+      String orderId;
+      boolean orderExists = false;
+
+      // get all orderIDs
+      try {
+         orderIDs = esql.executeQueryAndReturnResult("SELECT orderID FROM FoodOrder");
+      } catch (SQLException e) {
+         System.out.println("Error fetching orderIDs: " + e.getMessage());
+         return;
+      }
+
+      // get order ID input and check it it exists
+      do {
+         orderId = String.valueOf(getIntInput("Please enter the Order ID: "));
+         for (List<String> row : orderIDs) {
+            if (row.get(0).trim().equals(orderId)) {
+               orderExists = true;
+               break;
+            }
+         }
+         if (!orderExists) {
+            System.out.println("Order ID " + orderId + " does not exist!");
+            continue;
+         } else {
+            break;
+         }
+      } while (true);
+
+
+      if (!canSeeAllOrders) {
+         try {
+            int count = esql.executeQuery("SELECT * FROM FoodOrder WHERE orderId=" + orderId + " AND login='" + authorizedUser + "';");
+            System.out.println(count);
+            if (count == 0) {
+               System.out.println("You do not have access to this order.");
+               return;
+            }
+         } catch (SQLException e) {
+            System.out.println("Error checking order ownership: " + e.getMessage());
+            return;
+         }
+      }
+
+      try {
+         esql.executeQueryAndPrintResult("SELECT orderId AS \"Order ID\", orderStatus AS \"Status\", orderTimestamp AS \"Order Timestamp\" FROM FoodOrder WHERE orderId=" + orderId + ";");
+         esql.executeQueryAndPrintResult("SELECT itemName AS \"Order Items\", quantity AS \"Quantity\" FROM ItemsInOrder WHERE orderId=" + orderId + ";");
+      } catch (SQLException e) {
+         System.out.println("Error fetching order information: " + e.getMessage());
+         return;
+      }
+   }
+
+
     public static void viewStores(PizzaStore esql) {
        // display all stores
        try {
@@ -890,7 +963,49 @@
           return;
        }
     }
-    public static void updateOrderStatus(PizzaStore esql) {}
+
+    public static void updateOrderStatus(PizzaStore esql) {
+      String orderIDInput;
+      String statusInput = "";
+      boolean orderExists = false;
+      List<List<String>> orderIDs = new ArrayList<>();
+
+      // get all orderIDs
+      try {
+         orderIDs = esql.executeQueryAndReturnResult("SELECT orderID FROM FoodOrder");
+      } catch (SQLException e) {
+         System.out.println("Error fetching orderIDs: " + e.getMessage());
+         return;
+      }
+
+      // get order ID input and check it it exists
+      do {
+         orderIDInput = String.valueOf(getIntInput("Please enter the Order ID for the order you want to update: "));
+         for (List<String> row : orderIDs) {
+            if (row.get(0).trim().equals(orderIDInput)) {
+               orderExists = true;
+               break;
+            }
+         }
+         if (!orderExists) {
+            System.out.println("Order ID " + orderIDInput + " does not exist!");
+            continue;
+         } else {
+            break;
+         }
+
+      } while (true);
+
+      // get order status and change order status
+      statusInput = getStringInput("Please enter the status you want to change the order to: ");
+      try {
+         esql.executeUpdate("UPDATE FoodOrder SET orderStatus ='" + statusInput + "' WHERE orderID=" + orderIDInput + ";");
+      } catch (SQLException e) {
+         System.out.println("Error updating order status: " + e.getMessage());
+         return;
+      }
+    }
+
     public static void updateMenu(PizzaStore esql) {}
     public static void updateUser(PizzaStore esql) {}
  
