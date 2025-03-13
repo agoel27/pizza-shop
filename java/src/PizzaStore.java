@@ -288,7 +288,7 @@ public class PizzaStore {
                 System.out.println("20. Log out\n");
                 switch (readChoice()){
                    case 1: viewProfile(esql, authorizedUser); break;
-                   case 2: updateProfile(esql); break;
+                   case 2: updateProfile(esql, authorizedUser); break;
                    case 3: viewMenu(esql); break;
                    case 4: placeOrder(esql); break;
                    case 5: viewAllOrders(esql); break;
@@ -330,6 +330,46 @@ public class PizzaStore {
          "*******************************************************\n");
    }//end Greeting
 
+   public static String getInput(String item) {
+      String input = "";
+      do {
+         System.out.print("Please enter " + item + ": ");
+         try {
+            input = in.readLine().trim();
+            break;
+         } catch (Exception e) {
+            System.out.println("Your input is invalid!");
+            continue;
+         }
+      } while (true);
+      return input;
+  }
+
+   /*
+    * Gets input from user
+    */
+   public static String getInput(String item, int maxLength) {
+      String input = "";
+      do {
+         System.out.print("Please enter " + item + " (1-" + maxLength + " characters): ");
+         try {
+            input = in.readLine().trim();
+            if(input.isEmpty()) {
+               System.out.println(item + " cannot be empty!");
+               continue;
+            } else if (input.length() > 30) {
+               System.out.println(item + " cannot be greater than 30 characters!");
+               continue;
+            }
+            break;
+         } catch (Exception e) {
+            System.out.println("Your input is invalid!");
+            continue;
+         }
+      } while (true);
+      return input;
+   }
+
    /*
     * Reads the users choice given from the keyboard
     * @int
@@ -355,8 +395,8 @@ public class PizzaStore {
     **/
     public static void CreateUser(PizzaStore esql){
       String loginInput = "";
-      String password = "";
-      String phoneNum = "";
+      String passwordInput = "";
+      String phoneNumInput = "";
       List<List<String>> existingLogins = new ArrayList<>();
       boolean loginExists;
 
@@ -403,33 +443,17 @@ public class PizzaStore {
       }while (true);
 
       // get and validate password
-      do {
-         System.out.print("Please enter password (1-30 characters): ");
-         try {
-            password = in.readLine().trim();
-            if(password.isEmpty()) {
-               System.out.println("Password cannot be empty!");
-               continue;
-            } else if (password.length() > 30) {
-               System.out.println("Password cannot be greater than 30 characters!");
-               continue;
-            }
-            break;
-         } catch (Exception e) {
-            System.out.println("Your input is invalid!");
-            continue;
-         }
-      }while (true);
+      passwordInput = getInput("password", 30);
 
       // get and validate phoneNum
       do {
          System.out.print("Please enter phone number: ");
          try {
-            phoneNum = in.readLine().trim();
-            if(phoneNum.isEmpty()) {
-               System.out.println("phoneNum cannot be empty!");
+            phoneNumInput = in.readLine().trim();
+            if(phoneNumInput.isEmpty()) {
+               System.out.println("Phone number cannot be empty!");
                continue;
-            } else if (phoneNum.length() > 20) {
+            } else if (phoneNumInput.length() > 20) {
                System.out.println("Phone number cannot be greater than 20 characters!");
                continue;
             }
@@ -442,7 +466,7 @@ public class PizzaStore {
 
       // add new user to db
       try {
-         esql.executeUpdate("INSERT INTO Users (login, password, role, favoriteItems, phoneNum) VALUES ('" + loginInput + "', '" + password + "', 'customer', NULL, '" + phoneNum + "');");
+         esql.executeUpdate("INSERT INTO Users (login, password, role, favoriteItems, phoneNum) VALUES ('" + loginInput + "', '" + passwordInput + "', 'customer', NULL, '" + phoneNumInput + "');");
          System.out.println("User created successfully!");
       } catch (SQLException e) {
             System.out.println("Error inserting user: " + e.getMessage());
@@ -500,6 +524,7 @@ public class PizzaStore {
          try {
             passwordInput = in.readLine().trim();
             userPassword = loginInfo.get(0).get(1);
+
             if(passwordInput.isEmpty()) {
                System.out.println("Password cannot be empty!");
                continue;
@@ -520,6 +545,8 @@ public class PizzaStore {
          }
       }while (true);
 
+      System.out.println("Welcome " + loginInput + "!");
+
       return loginInput;
    }//end LogIn
 
@@ -537,7 +564,73 @@ public class PizzaStore {
       
    }//end viewProfile
 
-   public static void updateProfile(PizzaStore esql) {}
+   /*
+    * Prompts user if they want to update 'profileItem' in profile
+    * @param the thing to update in profile (string)
+    */
+    public static String updateProfilePrompt(String profileItem) {
+      String response = "";
+      do {
+         System.out.print("Would you like to change your " + profileItem + " (y/n)? ");
+         try {
+            response = in.readLine();
+            if(!response.equals("y") && !response.equals("n")) {
+               System.out.println("Please enter 'y' or 'n'.");
+               continue;
+            }
+            break;
+         } catch (Exception e) {
+            System.out.println("Your input is invalid!");
+            continue;
+         }
+      } while(true);
+      return response;
+    }//end updateProfilePrompt
+
+   /*
+    * Allows user to update password, phone number, favorite items
+    */
+   public static void updateProfile(PizzaStore esql, String authorizedUser) {
+      String response = "";
+      String passwordInput = "";
+      String phoneNumInput = "";
+      String favoriteItemsInput = "";
+
+      response = updateProfilePrompt("password");
+      if (response.equals("y")) {
+         passwordInput = getInput("password", 30);
+         try {
+            esql.executeUpdate("UPDATE Users SET password='" + passwordInput + "' WHERE login ='" + authorizedUser + "';");
+         } catch (SQLException e) {
+            System.out.println("Error updating password: " + e.getMessage());
+         }
+         System.out.println("Successfully updated password!");
+      }
+
+      response = updateProfilePrompt("phone number");
+      if (response.equals("y")) {
+         phoneNumInput = getInput("phone number", 20);
+         try {
+            esql.executeUpdate("UPDATE Users SET phoneNum='" + phoneNumInput + "' WHERE login ='" + authorizedUser + "';");
+         } catch (SQLException e) {
+            System.out.println("Error updating phone number: " + e.getMessage());
+         }
+         System.out.println("Successfully updated phone number!");
+      }
+
+      response = updateProfilePrompt("favorite items");
+      if (response.equals("y")) {
+         favoriteItemsInput = getInput("favorite items");
+         try {
+            esql.executeUpdate("UPDATE Users SET favoriteItems='" + favoriteItemsInput + "' WHERE login ='" + authorizedUser + "';");
+         } catch (SQLException e) {
+            System.out.println("Error updating favorite items: " + e.getMessage());
+         }
+         System.out.println("Successfully updated favorite items!");
+      }
+
+   }// end updateProfile
+
    public static void viewMenu(PizzaStore esql) {}
    public static void placeOrder(PizzaStore esql) {}
    public static void viewAllOrders(PizzaStore esql) {}
