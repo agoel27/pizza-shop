@@ -663,16 +663,77 @@ public class PizzaStore {
 
    }// end updateProfile
 
+   public static double getMoneyInput(String prompt) {
+      double input;
+      do {
+         System.out.print(prompt);
+         try {
+            input = Double.parseDouble(in.readLine());
+            if (input < 0) {
+               System.out.println("Amount cannot be negative!");
+               continue;
+            }
+            break;
+         } catch (Exception e) {
+            System.out.println("Your input is invalid!");
+            continue;
+         }
+      } while (true);
+      return input;
+   }
+
    /*
     * Show menu
     */
    public static void viewMenu(PizzaStore esql) {
       try {
-         esql.executeQueryAndPrintResult("SELECT * FROM Items");
+         while (true) {
+            System.out.println("\nPlease select the type of menu you would like to see:");
+            System.out.println("1. All items");
+            System.out.println("2. Entrees");
+            System.out.println("3. Sides");
+            System.out.println("4. Drinks");
+            System.out.println("5. Under a certain price");
+            System.out.println("9. Quit");
+            String filter = "";
+            switch (readChoice()){
+               case 1: break;
+               case 2: filter = " WHERE typeOfItem = 'entree'"; break;
+               case 3: filter = " WHERE typeOfItem = 'sides'"; break;
+               case 4: filter = " WHERE typeOfItem = 'drinks'"; break;
+               case 5: 
+                  double maxPrice = getMoneyInput("Please enter the maximum price: ");
+                  filter = " WHERE price <= " + maxPrice;
+                  break;
+               case 9: return;
+               default: System.out.println("Unrecognized choice!"); continue;
+            }
+
+            String order = "";
+            System.out.println("\nIn what order would you like the menu?");
+            System.out.println("1. Default (no order)");
+            System.out.println("2. Price (low to high)");
+            System.out.println("3. Price (high to low)");
+            switch (readChoice()) {
+               case 1: break;
+               case 2: order = " ORDER BY price ASC"; break;
+               case 3: order = " ORDER BY price DESC"; break;
+               default: System.out.println("Unrecognized choice!"); continue;
+            }
+
+            System.out.println(
+         "\n*******************************************************\n" +
+         "              Our Offerings                            \n" +
+         "*******************************************************");
+         int rowCount = esql.executeQueryAndPrintResult("SELECT typeOfItem as \"Type\", itemName AS \"Item\", price AS \"Price\", description AS \"Description\", ingredients AS \"Ingredients\" FROM Items" + filter + order + ";");
+         if (rowCount == 0) {
+            System.out.println("No items found for the selected criteria!");
+         }
+         }
       } catch (SQLException e) {
          System.out.println("Error fetching menu items: " + e.getMessage());
       }
-   }//end viewMenu
+   }
 
    public static int getIntInput(String prompt) {
       int input;
